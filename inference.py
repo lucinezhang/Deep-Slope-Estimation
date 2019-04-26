@@ -63,7 +63,8 @@ for i, data in enumerate(test_loader, 0):
     
     loss, rms_error = get_loss(pred, target, trans)
 
-    pred = torch.bmm(pred, trans.transpose(2, 1))
+    if trans is not None:
+        pred = torch.bmm(pred, trans.transpose(2, 1))
 
     preds.append(pred.detach().cpu().numpy())
 

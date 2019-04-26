@@ -107,10 +107,11 @@ class PointNetfeat(nn.Module):
 
     def forward(self, x):
         n_pts = x.size()[2]
-        trans = self.stn(x)
-        x = x.transpose(2, 1)
-        x = torch.bmm(x, trans)
-        x = x.transpose(2, 1)
+        trans = None
+        # trans = self.stn(x)
+        # x = x.transpose(2, 1)
+        # x = torch.bmm(x, trans)
+        # x = x.transpose(2, 1)
         x = F.relu(self.bn1a(self.conv1a(x)))
         x = F.relu(self.bn1b(self.conv1b(x)))
 
@@ -191,8 +192,9 @@ def feature_transform_regularizer(trans):
     loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2,1)) - I, dim=(1,2)))
     return loss
 
-def get_loss(pred, label, patch_rot):
-    pred = torch.bmm(pred, patch_rot.transpose(2, 1))
+def get_loss(pred, label, patch_rot=None):
+    if patch_rot is not None:
+        pred = torch.bmm(pred, patch_rot.transpose(2, 1))
     
     label = label / torch.norm(label, p=2, dim=2, keepdim=True)
     pred = pred / torch.norm(pred, p=2, dim=2, keepdim=True)
