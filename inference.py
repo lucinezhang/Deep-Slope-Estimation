@@ -7,7 +7,7 @@ import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
 from pointnet.dataset import GeneratedDataset
-from pointnet.model import PointNetDenseCls, feature_transform_regularizer, get_loss
+from pointnet.model_new import PointNetDenseCls, feature_transform_regularizer, get_loss
 import torch.nn.functional as F
 import numpy as np
 from tensorboardX import SummaryWriter
