@@ -69,7 +69,7 @@ for epoch in range(opt.nepoch):
     for i, data in enumerate(train_loader, 0):
         scheduler.step()
         step = epoch * num_batch + i
-        writer.add_scalar('lr', optimizer.param_group['lr'], step)
+        writer.add_scalar('lr', optimizer.param_groups[0]['lr'], step)
 
         points, target = data
         points = points.transpose(2, 1)
