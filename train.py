@@ -59,15 +59,17 @@ if opt.model != '':
     classifier.load_state_dict(torch.load(opt.model))
 
 optimizer = optim.Adam(classifier.parameters(), lr=0.001, betas=(0.9, 0.999))
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8000, gamma=0.5)
+lr_lambda = lambda batch: max(0.5 ** ((batch * opt.batchSize) // 8000), 0.00001)
+scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 classifier.cuda()
 
 num_batch = len(train_dataset) / opt.batchSize
 
 for epoch in range(opt.nepoch):
-    scheduler.step()
     for i, data in enumerate(train_loader, 0):
+        scheduler.step()
         step = epoch * num_batch + i
+        writer.add_scalar('lr', optimizer.param_group['lr'], step)
 
         points, target = data
         points = points.transpose(2, 1)
