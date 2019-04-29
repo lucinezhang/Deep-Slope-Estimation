@@ -24,7 +24,7 @@ opt = parser.parse_args()
 print(opt)
 
 
-test_dataset = GeneratedDataset('/scratch/luxinz/test_plane_no_noise.h5')
+test_dataset = GeneratedDataset('/scratch/luxinz/test_curv_no_noise.h5')
 test_loader = torch.utils.data.DataLoader(
     test_dataset,
     batch_size=opt.batchSize,
