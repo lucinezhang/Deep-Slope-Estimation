@@ -4,10 +4,10 @@ from open3d import *
 import h5py
 
 # plane no noise
-f = h5py.File('data/test_plane_no_noise.h5')
-points = f['data'][:]
-gt = f['label'][:]
-pred = np.load('results/plane_no_noise_pred.npy')
+# f = h5py.File('data/test_plane_no_noise.h5')
+# points = f['data'][:]
+# gt = f['label'][:]
+# pred = np.load('results/plane_no_noise_pred.npy')
 
 # plane with noise 0.1
 # f = h5py.File('../data/test_plane_noise0.1.h5')
@@ -22,10 +22,10 @@ pred = np.load('results/plane_no_noise_pred.npy')
 # pred = np.load('results/plane_noise0.3_pred.npy')
 
 # curv no noise
-# f = h5py.File('../data/test_curv_no_noise.h5')
-# points = f['data'][:]
-# gt = f['label'][:]
-# pred = np.load('results/curv_no_noise_pred.npy')
+f = h5py.File('data/test_curv_no_noise.h5')
+points = f['data'][:]
+gt = f['label'][:]
+pred = np.load('results/curv_no_noise_pred.npy')
 
 pred = pred / np.linalg.norm(pred, axis=2, keepdims=True)
 
