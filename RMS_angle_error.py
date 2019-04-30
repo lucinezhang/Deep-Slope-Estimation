@@ -10,13 +10,13 @@ import h5py
 # pred = np.load('results/plane_no_noise_pred.npy')
 
 # plane with noise 0.1
-# f = h5py.File('../data/test_plane_noise0.1.h5')
+# f = h5py.File('data/test_plane_noise0.1.h5')
 # points = f['data'][:]
 # gt = f['label'][:]
 # pred = np.load('results/plane_noise0.1_pred.npy')
 
 # plane with noise 0.3
-# f = h5py.File('../data/test_plane_noise0.3.h5')
+# f = h5py.File('data/test_plane_noise0.3.h5')
 # points = f['data'][:]
 # gt = f['label'][:]
 # pred = np.load('results/plane_noise0.3_pred.npy')
