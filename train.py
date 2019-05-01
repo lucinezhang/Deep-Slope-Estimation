@@ -19,7 +19,7 @@ parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to 
 parser.add_argument('--outf', type=str, default='curv_no_noise', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
-parser.add_argument('--eval_interval', type=int, default=100, help="interval of evaluation on val set")
+parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
 
 opt = parser.parse_args()
 print(opt)
@@ -97,22 +97,15 @@ for epoch in range(opt.nepoch):
         writer.add_scalar('train/rms_error', rms_error.item(), step)
 
         if step % opt.eval_interval == 0:
-            preds = []
-            targets = []
-            for j, data in enumerate(val_loader, 0):
-                points, target = data
-                points = points.transpose(2, 1)
-                points, target = points.cuda(), target.cuda()
+            j, data = next(enumerate(val_loader, 0))
+            points, target = data
+            points = points.transpose(2, 1)
+            points, target = points.cuda(), target.cuda()
 
-                classifier = classifier.eval()
-                pred, trans, _ = classifier(points)
+            classifier = classifier.eval()
+            pred, trans, _ = classifier(points)
 
-                preds.append(pred)
-                targets.append(target)
-            
-            preds = torch.stack(preds)
-            targets = torch.stack(targets)
-            loss, rms_error = get_loss(preds, targets, trans)
+            loss, rms_error = get_loss(pred, target, trans)
 
             print('[%d: %d/%d] %s loss: %f rms_error: %f' % (epoch, i, num_batch, blue('test'), loss.item(), rms_error.item()))
             writer.add_scalar('val/loss', loss.item(), step)
