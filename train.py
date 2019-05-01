@@ -16,9 +16,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
-parser.add_argument('--outf', type=str, default='curv_no_noise/new_model', help='output folder')
+parser.add_argument('--outf', type=str, default='curv_no_noise', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
+parser.add_argument('--eval_interval', type=int, default=100, help="interval of evaluation on val set")
 
 opt = parser.parse_args()
 print(opt)
@@ -51,6 +52,11 @@ except OSError:
 
 writer = SummaryWriter(opt.outf)
 
+if opt.feature_transform:
+    model_name = "model_feature_transform"
+else:
+    model_name = "model"
+
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
 classifier = PointNetDenseCls(k=3, feature_transform=opt.feature_transform)
@@ -64,6 +70,7 @@ scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 classifier.cuda()
 
 num_batch = len(train_dataset) / opt.batchSize
+best_error = 10000
 
 for epoch in range(opt.nepoch):
     for i, data in enumerate(train_loader, 0):
@@ -89,24 +96,29 @@ for epoch in range(opt.nepoch):
         writer.add_scalar('train/loss', loss.item(), step)
         writer.add_scalar('train/rms_error', rms_error.item(), step)
 
-        if i % 10 == 0:
-            j, data = next(enumerate(val_loader, 0))
-            points, target = data
-            points = points.transpose(2, 1)
-            points, target = points.cuda(), target.cuda()
+        if step % opt.eval_interval == 0:
+            preds = []
+            targets = []
+            for j, data in enumerate(val_loader, 0):
+                points, target = data
+                points = points.transpose(2, 1)
+                points, target = points.cuda(), target.cuda()
 
-            classifier = classifier.eval()
-            pred, trans, _ = classifier(points)
+                classifier = classifier.eval()
+                pred, trans, _ = classifier(points)
+
+                preds.append(pred)
+                targets.append(target)
             
-            loss, rms_error = get_loss(pred, target, trans)
+            preds = torch.stack(preds)
+            targets = torch.stack(targets)
+            loss, rms_error = get_loss(preds, targets, trans)
 
             print('[%d: %d/%d] %s loss: %f rms_error: %f' % (epoch, i, num_batch, blue('test'), loss.item(), rms_error.item()))
             writer.add_scalar('val/loss', loss.item(), step)
             writer.add_scalar('val/rms_error', rms_error.item(), step)
 
-if opt.feature_transform:
-    model_name = "model_feature_transform"
-else:
-    model_name = "model"
-torch.save(classifier.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
+            if rms_error.item() < best_error:
+                best_error = rms_error.item()
+                torch.save(classifier.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
 

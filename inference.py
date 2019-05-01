@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
-parser.add_argument('--outf', type=str, default='curv_no_noise', help='output folder')
-parser.add_argument('--model', type=str, default='curv_no_noise/new_model/model.pth', help='model path')
+parser.add_argument('--outname', type=str, default='curv_no_noise', help='output name')
+parser.add_argument('--model', type=str, default='curv_no_noise/model.pth', help='model path')
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 
 opt = parser.parse_args()
@@ -33,10 +33,6 @@ test_loader = torch.utils.data.DataLoader(
 
 print(len(test_dataset))
 
-try:
-    os.makedirs(opt.outf)
-except OSError:
-    pass
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
@@ -70,5 +66,5 @@ for i, data in enumerate(test_loader, 0):
 
 preds = np.vstack(preds)
 print(preds.shape)
-np.save(opt.outf+'_pred', preds)
+np.save(opt.outname+'_pred', preds)
 
