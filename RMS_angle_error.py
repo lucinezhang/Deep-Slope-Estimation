@@ -7,7 +7,7 @@ import h5py
 # f = h5py.File('data/test_plane_no_noise.h5')
 # points = f['data'][:]
 # gt = f['label'][:]
-# pred = np.load('results/plane_no_noise_pred.npy')
+# pred = np.load('results_with_input_trans/plane_no_noise_pred.npy')
 
 # plane with noise 0.1
 # f = h5py.File('data/test_plane_noise0.1.h5')
@@ -39,10 +39,10 @@ print("RMS angle error:", loss)
 
 
 pcd = PointCloud()
-pcd.points = Vector3dVector(points[100])
+pcd.points = Vector3dVector(points[10])
 estimate_normals(pcd, search_param = KDTreeSearchParamHybrid(radius = 0.1, max_nn = 5000))
 POINT_NUM = points.shape[1]
 for i in range(POINT_NUM):
-	pcd.normals[i] = pred[100,i,:]
+	pcd.normals[i] = pred[10,i,:]
 
 draw_geometries([pcd])

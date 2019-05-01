@@ -96,7 +96,7 @@ for epoch in range(opt.nepoch):
         writer.add_scalar('train/loss', loss.item(), step)
         writer.add_scalar('train/rms_error', rms_error.item(), step)
 
-        if step % opt.eval_interval == 0:
+        if i % opt.eval_interval == 0:
             j, data = next(enumerate(val_loader, 0))
             points, target = data
             points = points.transpose(2, 1)
