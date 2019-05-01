@@ -7,7 +7,7 @@ import h5py
 # f = h5py.File('data/test_plane_no_noise.h5')
 # points = f['data'][:]
 # gt = f['label'][:]
-# pred = np.load('results_with_input_trans/plane_no_noise_pred.npy')
+# pred = np.load('results/plane_no_noise_pred.npy')
 
 # plane with noise 0.1
 # f = h5py.File('data/test_plane_noise0.1.h5')
