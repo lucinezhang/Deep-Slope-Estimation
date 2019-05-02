@@ -64,14 +64,16 @@ blue = lambda x: '\033[94m' + x + '\033[0m'
 teacher = PointNetDenseCls(k=3, global_feat=True, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
 student = StudentNetDenseCls(k=3)
 
-if opt.model != '':
+if opt.teacher_model != '':
     teacher.load_state_dict(torch.load(opt.teacher_model))
 else:
     print("No trained teacher model loaded!!")
 
 # stage 1
 
-optimizer = optim.Adam([student.feat.parameters(), student.fc.parameters()], lr=0.001, betas=(0.9, 0.999))
+optimizer = optim.Adam([
+    {'params': student.feat.parameters()}, 
+    {'params': student.fc.parameters()}], lr=0.001, betas=(0.9, 0.999))
 lr_lambda = lambda batch: max(0.5 ** ((batch * opt.batchSize) // 8000), 0.00001)
 scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 teacher.cuda()
