@@ -14,7 +14,7 @@ import time
 from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batchSize', type=int, default=2000, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
 parser.add_argument('--outf', type=str, default='kitti_output', help='output folder')
@@ -25,10 +25,10 @@ parser.add_argument('--eval_interval', type=int, default=50, help="interval of e
 opt = parser.parse_args()
 print(opt)
 
-opt.manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", opt.manualSeed)
-random.seed(opt.manualSeed)
-torch.manual_seed(opt.manualSeed)
+#opt.manualSeed = random.randint(1, 10000)  # fix seed
+#print("Random Seed: ", opt.manualSeed)
+#random.seed(opt.manualSeed)
+#torch.manual_seed(opt.manualSeed)
 
 #train_dataset = GeneratedDataset('/scratch/luxinz/train_curv_no_noise.h5')
 train_dataset = KittiNormalEst(stage='train')
@@ -47,13 +47,6 @@ val_loader = torch.utils.data.DataLoader(
     num_workers=int(opt.workers))
 
 print(len(train_dataset), len(val_dataset))
-
-try:
-    os.makedirs(opt.outf)
-except OSError:
-    pass
-
-writer = SummaryWriter(opt.outf)
 
 if opt.feature_transform:
     model_name = "model_feature_transform"
