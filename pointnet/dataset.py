@@ -28,10 +28,10 @@ class KittiNormalEst(data.Dataset):
     def __init__(self, stage='train'):
         super(KittiNormalEst, self).__init__()
         print('loading ', stage, ' data...')
-        h5_city = '../KITTI_raw_data/city4096.h5'
-        h5_resi = '../KITTI_raw_data/resi4096.h5'
-        h5_road = '../KITTI_raw_data/road4096.h5'
-        h5_campus = '../KITTI_raw_data/campus4096.h5'
+        h5_city = '/scratch/yujiac2/data/kitti/city100.h5'
+        h5_resi = '/scratch/yujiac2/data/kitti/resi100.h5'
+        h5_road = '/scratch/yujiac2/data/kitti/road100.h5'
+        h5_campus = '/scratch/yujiac2/data/kitti/campus100.h5'
         data_city, label_city = load_h5_kitti(h5_city)
         data_resi, label_resi = load_h5_kitti(h5_resi)
         data_road, label_road = load_h5_kitti(h5_road)

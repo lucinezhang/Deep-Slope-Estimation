@@ -65,7 +65,7 @@ teacher = PointNetDenseCls(k=3, global_feat=True, input_transform=opt.input_tran
 student = StudentNetDenseCls(k=3)
 
 if opt.model != '':
-    teacher.load_state_dict(torch.load(opt.model))
+    teacher.load_state_dict(torch.load(opt.teacher_model))
 else:
     print("No trained teacher model loaded!!")
 
