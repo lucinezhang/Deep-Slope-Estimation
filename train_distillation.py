@@ -15,9 +15,10 @@ from tensorboardX import SummaryWriter
 parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
-parser.add_argument('--outf', type=str, default='curv_no_noise', help='output folder')
-parser.add_argument('--model', type=str, default='', help='model path')
+parser.add_argument('--nepoch_1', type=int, default=50, help='number of epochs to train for the hint loss')
+parser.add_argument('--nepoch_2', type=int, default=50, help='number of epochs to train for the final loss')
+parser.add_argument('--outf', type=str, default='curv_no_noise_kd', help='output folder')
+parser.add_argument('--teacher_model', type=str, default='curv_no_noise/model.pth', help='model path')
 parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
@@ -60,20 +61,54 @@ else:
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
-classifier = PointNetDenseCls(k=3, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
+teacher = PointNetDenseCls(k=3, global_feat=True, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
+student = StudentNetDenseCls(k=3)
 
 if opt.model != '':
-    classifier.load_state_dict(torch.load(opt.model))
+    teacher.load_state_dict(torch.load(opt.model))
+else:
+    print("No trained teacher model loaded!!")
 
-optimizer = optim.Adam(classifier.parameters(), lr=0.001, betas=(0.9, 0.999))
+# stage 1
+
+optimizer = optim.Adam([student.feat.parameters(), student.fc.parameters()], lr=0.001, betas=(0.9, 0.999))
 lr_lambda = lambda batch: max(0.5 ** ((batch * opt.batchSize) // 8000), 0.00001)
 scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-classifier.cuda()
+teacher.cuda()
+student.cuda()
+
+num_batch = len(train_dataset) / opt.batchSize
+
+for epoch in range(opt.nepoch_1):
+    for i, data in enumerate(train_loader, 0):
+        scheduler.step()
+
+        points, target = data
+        points = points.transpose(2, 1)
+        points, target = points.cuda(), target.cuda()
+
+        optimizer.zero_grad()
+        teacher = teacher.eval()
+        student = student.train()
+        pc_feat_teacher, _, _, _ = teacher(points)
+        pc_feat_student, pc_feat_teacher, _ = student(points, pc_feat_teacher)
+        
+        loss = get_hint_loss(pc_feat_teacher, pc_feat_student)
+        loss.backward()
+        optimizer.step()
+
+        print('[%d: %d/%d] train loss: %f' % (epoch, i, num_batch, loss.item()))
+
+# stage 2
+
+optimizer = optim.Adam(student.parameters(), lr=0.001, betas=(0.9, 0.999))
+lr_lambda = lambda batch: max(0.5 ** ((batch * opt.batchSize) // 8000), 0.00001)
+scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
 num_batch = len(train_dataset) / opt.batchSize
 best_error = 10000
 
-for epoch in range(opt.nepoch):
+for epoch in range(opt.nepoch_2):
     for i, data in enumerate(train_loader, 0):
         scheduler.step()
         step = epoch * num_batch + i
@@ -84,12 +119,10 @@ for epoch in range(opt.nepoch):
         points, target = points.cuda(), target.cuda()
 
         optimizer.zero_grad()
-        classifier = classifier.train()
-        pred, trans, trans_feat = classifier(points)
+        student = student.train()
+        _, _, pred = student(points)
         
-        loss, rms_error = get_loss(pred, target, trans)
-        if opt.feature_transform:
-            loss += feature_transform_regularizer(trans_feat) * 0.001
+        loss, rms_error = get_loss(pred, target)
         loss.backward()
         optimizer.step()
 
@@ -103,10 +136,10 @@ for epoch in range(opt.nepoch):
             points = points.transpose(2, 1)
             points, target = points.cuda(), target.cuda()
 
-            classifier = classifier.eval()
-            pred, trans, _ = classifier(points)
+            student = student.eval()
+            _, _, pred = student(points)
 
-            loss, rms_error = get_loss(pred, target, trans)
+            loss, rms_error = get_loss(pred, target)
 
             print('[%d: %d/%d] %s loss: %f rms_error: %f' % (epoch, i, num_batch, blue('test'), loss.item(), rms_error.item()))
             writer.add_scalar('val/loss', loss.item(), step)
@@ -114,5 +147,6 @@ for epoch in range(opt.nepoch):
 
             if rms_error.item() < best_error:
                 best_error = rms_error.item()
-                torch.save(classifier.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
+                torch.save(student.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
+
 

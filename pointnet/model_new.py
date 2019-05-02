@@ -87,9 +87,8 @@ class STNkd(nn.Module):
         return x
 
 class PointNetfeat(nn.Module):
-    def __init__(self, global_feat = True, feature_transform = False):
+    def __init__(self, global_feat = False, input_transform = False, feature_transform = False):
         super(PointNetfeat, self).__init__()
-        self.stn = STN3d()
         self.conv1a = nn.Conv1d(3, 64, 1)
         self.conv1b = nn.Conv1d(64, 64, 1)
         self.conv2 = nn.Conv1d(64, 64, 1)
@@ -105,17 +104,23 @@ class PointNetfeat(nn.Module):
         self.bn5 = nn.BatchNorm1d(256)
         self.bn6 = nn.BatchNorm1d(128)
         self.global_feat = global_feat
+        self.input_transform = input_transform
         self.feature_transform = feature_transform
+        if self.input_transform:
+            self.stn = STN3d()
         if self.feature_transform:
             self.fstn = STNkd(k=64)
 
     def forward(self, x):
         n_pts = x.size()[2]
-        # trans = None
-        trans = self.stn(x)
-        x = x.transpose(2, 1)
-        x = torch.bmm(x, trans)
-        x = x.transpose(2, 1)
+        if self.input_transform:
+            trans = self.stn(x)
+            x = x.transpose(2, 1)
+            x = torch.bmm(x, trans)
+            x = x.transpose(2, 1)
+        else:
+            trans = None
+        
         x = F.relu(self.bn1a(self.conv1a(x)))
         x = F.relu(self.bn1b(self.conv1b(x)))
 
@@ -135,40 +140,22 @@ class PointNetfeat(nn.Module):
         pc_feat = pc_feat.view(-1, 1024)
         pc_feat = F.relu(self.bn5(self.fc1(pc_feat)))
         pc_feat = F.relu(self.bn6(self.fc2(pc_feat)))
+        pc_feat_repeat = pc_feat.view(-1, 128, 1).repeat(1, 1, n_pts)
 
 
         if self.global_feat:
-            return x, trans, trans_feat
+            return pc_feat, torch.cat([points_feat, pc_feat_repeat], 1), trans, trans_feat
         else:
-            pc_feat = pc_feat.view(-1, 128, 1).repeat(1, 1, n_pts)
-            return torch.cat([points_feat, pc_feat], 1), trans, trans_feat
-
-class PointNetCls(nn.Module):
-    def __init__(self, k=2, feature_transform=False):
-        super(PointNetCls, self).__init__()
-        self.feature_transform = feature_transform
-        self.feat = PointNetfeat(global_feat=True, feature_transform=feature_transform)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k)
-        self.dropout = nn.Dropout(p=0.3)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.bn2 = nn.BatchNorm1d(256)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x, trans, trans_feat = self.feat(x)
-        x = F.relu(self.bn1(self.fc1(x)))
-        x = F.relu(self.bn2(self.dropout(self.fc2(x))))
-        x = self.fc3(x)
-        return F.log_softmax(x, dim=1), trans, trans_feat
+            return torch.cat([points_feat, pc_feat_repeat], 1), trans, trans_feat
 
 class PointNetDenseCls(nn.Module):
-    def __init__(self, k = 2, feature_transform=False):
+    def __init__(self, k = 3, global_feat=False, input_transform=False, feature_transform=False):
         super(PointNetDenseCls, self).__init__()
         self.k = k
-        self.feature_transform=feature_transform
-        self.feat = PointNetfeat(global_feat=False, feature_transform=feature_transform)
+        self.global_feat = global_feat
+        self.input_transform = input_transform
+        self.feature_transform = feature_transform
+        self.feat = PointNetfeat(global_feat=global_feat, input_transform=input_transform, feature_transform=feature_transform)
         self.conv1 = nn.Conv1d(1152, 512, 1)
         self.conv2 = nn.Conv1d(512, 256, 1)
         self.conv3 = nn.Conv1d(256, 128, 1)
@@ -183,14 +170,92 @@ class PointNetDenseCls(nn.Module):
     def forward(self, x):
         batchsize = x.size()[0]
         n_pts = x.size()[2]
-        x, trans, trans_feat = self.feat(x)
+
+        if self.global_feat:
+            pc_feat, x, trans, trans_feat = self.feat(x)
+        else:
+            x, trans, trans_feat = self.feat(x)
+
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
         x = F.relu(self.bn4(self.dropout(self.conv4(x))))
         x = self.conv5(x)
         x = x.transpose(2,1)
-        return x, trans, trans_feat
+
+        if self.global_feat:
+            return pc_feat, x, trans, trans_feat
+        else:
+            return x, trans, trans_feat
+
+class StudentNetfeat(nn.Module):
+    def __init__(self):
+        super(StudentNetfeat, self).__init__()
+        self.conv1a = nn.Conv1d(3, 16, 1)
+        self.conv1b = nn.Conv1d(16, 16, 1)
+        self.conv2 = nn.Conv1d(16, 16, 1)
+        self.conv3 = nn.Conv1d(16, 32, 1)
+        self.conv4 = nn.Conv1d(32, 256, 1)
+        self.fc1 = nn.Linear(256, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.bn1a = nn.BatchNorm1d(16)
+        self.bn1b = nn.BatchNorm1d(16)
+        self.bn2 = nn.BatchNorm1d(16)
+        self.bn3 = nn.BatchNorm1d(32)
+        self.bn4 = nn.BatchNorm1d(256)
+        self.bn5 = nn.BatchNorm1d(64)
+        self.bn6 = nn.BatchNorm1d(32)
+
+    def forward(self, x):
+        n_pts = x.size()[2]
+        
+        x = F.relu(self.bn1a(self.conv1a(x)))
+        x = F.relu(self.bn1b(self.conv1b(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        points_feat = F.relu(self.bn4(self.conv4(x)))
+
+        pc_feat = torch.max(points_feat, 2, keepdim=True)[0]
+        pc_feat = pc_feat.view(-1, 256)
+        pc_feat = F.relu(self.bn5(self.fc1(pc_feat)))
+        pc_feat = F.relu(self.bn6(self.fc2(pc_feat)))
+
+        pc_feat_repeat = pc_feat.view(-1, 32, 1).repeat(1, 1, n_pts)
+        return pc_feat, torch.cat([points_feat, pc_feat_repeat], 1)
+
+class StudentNetDenseCls(nn.Module):
+    def __init__(self, k = 3):
+        super(StudentNetDenseCls, self).__init__()
+        self.k = k
+        self.feat = StudentNetfeat()
+        self.fc = nn.Linear(128, 32)
+        self.conv1 = nn.Conv1d(288, 64, 1)
+        self.conv2 = nn.Conv1d(64, 32, 1)
+        self.conv3 = nn.Conv1d(32, 16, 1)
+        self.conv4 = nn.Conv1d(16, 16, 1)
+        self.conv5 = nn.Conv1d(16, self.k, 1)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(32)
+        self.bn3 = nn.BatchNorm1d(16)
+        self.bn4 = nn.BatchNorm1d(16)
+        self.bn_fc = nn.BatchNorm1d(32)
+
+    def forward(self, x, pc_feat_teacher=None):
+        batchsize = x.size()[0]
+        n_pts = x.size()[2]
+
+        pc_feat_student, x = self.feat(x)
+        if pc_feat_teacher is not None:
+            pc_feat_teacher = F.relu(self.bn_fc(self.fc(pc_feat_teacher)))
+
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = self.conv5(x)
+        x = x.transpose(2,1)
+        return pc_feat_student, pc_feat_teacher, x
+
 
 def feature_transform_regularizer(trans):
     d = trans.size()[1]
@@ -216,6 +281,9 @@ def get_loss(pred, label, patch_rot=None):
     rms_error = torch.sqrt(torch.mean(angle_dif.pow(2)))
 
     return loss, rms_error
+
+def get_hint_loss(pc_feat_teacher, pc_feat_student):
+    return F.mse_loss(pc_feat_student, pc_feat_teacher)
 
 # quaternion a + bi + cj + dk should be given in the form [a,b,c,d]
 def batch_quat_to_rotmat(q, out=None):
