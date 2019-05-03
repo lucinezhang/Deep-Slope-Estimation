@@ -65,6 +65,7 @@ blue = lambda x: '\033[94m' + x + '\033[0m'
 
 teacher = PointNetDenseCls(k=3, global_feat=True, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
 student = StudentNetDenseCls(k=3)
+print("student parameters: ", sum(p.numel() for p in student.parameters() if p.requires_grad))
 
 if opt.teacher_model != '':
     teacher.load_state_dict(torch.load(opt.teacher_model))
