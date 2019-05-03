@@ -15,7 +15,7 @@ from tensorboardX import SummaryWriter
 parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument('--nepoch_1', type=int, default=50, help='number of epochs to train for the hint loss')
+parser.add_argument('--nepoch_1', type=int, default=10, help='number of epochs to train for the hint loss')
 parser.add_argument('--nepoch_2', type=int, default=50, help='number of epochs to train for the final loss')
 parser.add_argument('--outf', type=str, default='curv_no_noise_kd', help='output folder')
 parser.add_argument('--teacher_model', type=str, default='curv_no_noise/model.pth', help='model path')

@@ -14,14 +14,14 @@ import time
 from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
-parser.add_argument('--outf', type=str, default='kitti_output', help='output folder')
+parser.add_argument('--outf', type=str, default='plane_no_noise', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
-parser.add_argument('--eval_interval', type=int, default=50, help="interval of evaluation on val set")
+parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
 
 opt = parser.parse_args()
 print(opt)
@@ -31,16 +31,16 @@ print(opt)
 # random.seed(opt.manualSeed)
 # torch.manual_seed(opt.manualSeed)
 
-#train_dataset = GeneratedDataset('/scratch/luxinz/train_curv_no_noise.h5')
-train_dataset = KittiNormalEst(stage='train')
+train_dataset = GeneratedDataset('/scratch/luxinz/train_'+opt.outf+'.h5')
+# train_dataset = KittiNormalEst(stage='train')
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=opt.batchSize,
     shuffle=True,
     num_workers=int(opt.workers))
 
-#val_dataset = GeneratedDataset('/scratch/luxinz/val_curv_no_noise.h5')
-val_dataset = KittiNormalEst(stage='val')
+val_dataset = GeneratedDataset('/scratch/luxinz/val_'+opt.outf+'.h5')
+# val_dataset = KittiNormalEst(stage='val')
 val_loader = torch.utils.data.DataLoader(
     val_dataset,
     batch_size=opt.batchSize,
@@ -48,6 +48,13 @@ val_loader = torch.utils.data.DataLoader(
     num_workers=int(opt.workers))
 
 print(len(train_dataset), len(val_dataset))
+
+try:
+    os.makedirs(opt.outf)
+except OSError:
+    pass
+
+writer = SummaryWriter(opt.outf)
 
 if opt.feature_transform:
     model_name = "model_feature_transform"
