@@ -18,7 +18,7 @@ parser.add_argument('--workers', type=int, help='number of data loading workers'
 parser.add_argument('--nepoch_1', type=int, default=10, help='number of epochs to train for the hint loss')
 parser.add_argument('--nepoch_2', type=int, default=50, help='number of epochs to train for the final loss')
 parser.add_argument('--outf', type=str, default='kitti_kd', help='output folder')
-parser.add_argument('--teacher_model', type=str, default='model30_3189.pth.pth', help='model path')
+parser.add_argument('--teacher_model', type=str, default='model30_3189.pth', help='model path')
 parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
@@ -65,6 +65,7 @@ blue = lambda x: '\033[94m' + x + '\033[0m'
 
 teacher = PointNetDenseCls(k=3, global_feat=True, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
 student = StudentNetDenseCls(k=3)
+print("teacher parameters: ", sum(p.numel() for p in teacher.parameters() if p.requires_grad))
 print("student parameters: ", sum(p.numel() for p in student.parameters() if p.requires_grad))
 
 if opt.teacher_model != '':
