@@ -1,11 +1,9 @@
 # Deep Slope Estimation with Formal Verification
 
-This project aims to estimate the drivability of the road for autonomous vehicles given a point cloud of the surroundings 
-and verify the robustness of the model with formal verification techniques. We use the estimated point normals to 
-represent the slope or the condition of the road. Since formal verification tools requires the model size to be as small as possible,
-we have also tried weight pruning and knowledge distilaltion to compress the model.
+This project aims to estimate the drivability of the road for autonomous vehicles given a point cloud of the surroundings and verify the robustness of the model with formal verification techniques. We use the estimated point normals to 
+represent the slope or the condition of the road. Since formal verification tools requires the model size to be as small as possible, we have also tried weight pruning and knowledge distilaltion to compress the model.
 
-The project page is [here](https://mscvprojects.ri.cmu.edu/2019teamf/)
+The project homepage is [here](https://mscvprojects.ri.cmu.edu/2019teamf/).
 
 
 ## Data preparation
@@ -37,7 +35,7 @@ python train.py --model "PATH TO THE TRAINED MODEL" --thres 1.5 --prune
 ```
 Genrally, training several epochs should be enough to give you acceptable reaults. The trained model will be saved in kitti_output folder. You can test and compare the results after retraining. model_90.pth is the retrained model after pruning 90% parameters with rms angle error 34.18.
 
-### Visualization
+## Visualization
 By runnning the testing code, you will get two .npz files with normal prediction results of the original model and the pruned model.
 Qulititative results can be demonstrated by running:
 ```
@@ -46,3 +44,9 @@ python vis.py --file 'PATH TO .npz FILE'
 We've also provided res_0.npz and res_90.npz which is the prediction results before and after pruning 90% parameters.
 
 ps: For the mentioned rms angle error, we refer to the error on the test.h5 full scene sample instead of the whole test set, beacause the ground truth (geometric method labeled) might not be correct.
+
+## Reference
+[1] The codes are developed based on [this repo](https://github.com/fxia22/pointnet.pytorch).
+[1] R. Q. Charles, H. Su, M. Kaichun, and L. J.Guibas. Pointnet: Deep learning on point setsfor 3d classification and segmentation.2017IEEE Conference on Computer Vision andPattern Recognition (CVPR), Jul 2017.
+[2] C. R. Qi, L. Yi, H. Su, and L. J. Guibas. Point-net++: Deep hierarchical feature learning onpoint sets in a metric space, 2017.
+[3] A. Romero, N. Ballas, S. E. Kahou, A. Chas-sang, C. Gatta, and Y. Bengio. Fitnets: Hintsfor thin deep nets, 2014
