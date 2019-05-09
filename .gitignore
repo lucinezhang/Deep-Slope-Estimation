@@ -1,14 +1,8 @@
 .ipynb_checkpoints/
-data
-results
-results_with_input_trans
 *.tar.gz
 *.pyc
 *.ipynb
 *.npy
-shapenetcore_partanno_segmentation_benchmark_v0/
 *.so
 .idea*
-cls/
-seg/
 *.egg-info/
