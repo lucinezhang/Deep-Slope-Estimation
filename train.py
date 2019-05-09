@@ -14,33 +14,30 @@ import time
 from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batchSize', type=int, default=24, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=400, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to train for')
-parser.add_argument('--outf', type=str, default='plane_no_noise', help='output folder')
+parser.add_argument('--thres', type=float, default=1.0, help='threshold for weight pruning')
+parser.add_argument('--outf', type=str, default='kitti_output', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
-parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
-parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
+parser.add_argument('--prune', action='store_true', help="weight pruning")
+parser.add_argument('--eval_interval', type=int, default=50, help="interval of evaluation on val set")
 
 opt = parser.parse_args()
 print(opt)
 
-# opt.manualSeed = random.randint(1, 10000)  # fix seed
-# print("Random Seed: ", opt.manualSeed)
-# random.seed(opt.manualSeed)
-# torch.manual_seed(opt.manualSeed)
 
-train_dataset = GeneratedDataset('/scratch/luxinz/train_'+opt.outf+'.h5')
-# train_dataset = KittiNormalEst(stage='train')
+#train_dataset = GeneratedDataset('/scratch/luxinz/train_curv_no_noise.h5')
+train_dataset = KittiNormalEst(stage='train')
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=opt.batchSize,
     shuffle=True,
     num_workers=int(opt.workers))
 
-val_dataset = GeneratedDataset('/scratch/luxinz/val_'+opt.outf+'.h5')
-# val_dataset = KittiNormalEst(stage='val')
+#val_dataset = GeneratedDataset('/scratch/luxinz/val_curv_no_noise.h5')
+val_dataset = KittiNormalEst(stage='val')
 val_loader = torch.utils.data.DataLoader(
     val_dataset,
     batch_size=opt.batchSize,
@@ -63,18 +60,30 @@ else:
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
-classifier = PointNetDenseCls(k=3, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
+classifier = PointNetDenseCls(k=3, feature_transform=opt.feature_transform)
 
 if opt.model != '':
     classifier.load_state_dict(torch.load(opt.model))
-
-optimizer = optim.Adam(classifier.parameters(), lr=0.001, betas=(0.9, 0.999))
+    print('model loaded!')
+optimizer = optim.Adam(classifier.parameters(), lr=0.01, betas=(0.9, 0.999))
 lr_lambda = lambda batch: max(0.5 ** ((batch * opt.batchSize) // 8000), 0.00001)
 scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 classifier.cuda()
 
 num_batch = len(train_dataset) / opt.batchSize
 best_error = 10000
+
+
+#pruning the weights
+if opt.prune:
+    all_mask = []
+    params=classifier.state_dict()
+    for k,v in params.items():
+        if 'conv' in k or 'fc' in k:
+            mask = np.abs(v.cpu().detach().numpy()) >= np.std(v.cpu().detach().numpy())*opt.thres
+            all_mask.append(mask)
+            params[k] *= torch.Tensor(mask.astype(np.float32)).cuda()
+    classifier.load_state_dict(params)
 
 for epoch in range(opt.nepoch):
     for i, data in enumerate(train_loader, 0):
@@ -88,6 +97,17 @@ for epoch in range(opt.nepoch):
 
         optimizer.zero_grad()
         classifier = classifier.train()
+
+        #set the pruned weights to 0 at each iter
+        if opt.prune:
+            params=classifier.state_dict()
+            ind_ = 0
+            for k,v in params.items():
+                if 'conv' in k or 'fc' in k:
+                    params[k] *= torch.Tensor(all_mask[ind_].astype(np.float32)).cuda()
+                    ind_ += 1
+            classifier.load_state_dict(params)
+
         pred, trans, trans_feat = classifier(points)
         
         loss, rms_error = get_loss(pred, target, trans)
@@ -119,4 +139,4 @@ for epoch in range(opt.nepoch):
             if rms_error.item() < best_error:
                 best_error = rms_error.item()
                 torch.save(classifier.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
-
+                print('model saved.')
