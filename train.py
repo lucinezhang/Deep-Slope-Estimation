@@ -20,6 +20,7 @@ parser.add_argument('--nepoch', type=int, default=50, help='number of epochs to 
 parser.add_argument('--thres', type=float, default=1.0, help='threshold for weight pruning')
 parser.add_argument('--outf', type=str, default='kitti_output', help='output folder')
 parser.add_argument('--model', type=str, default='', help='model path')
+parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 parser.add_argument('--prune', action='store_true', help="weight pruning")
 parser.add_argument('--eval_interval', type=int, default=50, help="interval of evaluation on val set")
@@ -60,7 +61,7 @@ else:
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
-classifier = PointNetDenseCls(k=3, feature_transform=opt.feature_transform)
+classifier = PointNetDenseCls(k=3, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
 
 if opt.model != '':
     classifier.load_state_dict(torch.load(opt.model))

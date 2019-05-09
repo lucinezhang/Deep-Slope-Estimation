@@ -19,7 +19,7 @@ parser.add_argument('--workers', type=int, help='number of data loading workers'
 parser.add_argument('--nepoch_1', type=int, default=2, help='number of epochs to train for the hint loss')
 parser.add_argument('--nepoch_2', type=int, default=50, help='number of epochs to train for the final loss')
 parser.add_argument('--outf', type=str, default='kitti_kd', help='output folder')
-parser.add_argument('--teacher_model', type=str, default='model30_3189.pth', help='model path')
+parser.add_argument('--teacher_model', type=str, default='models/model_0.pth', help='model path')
 parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 parser.add_argument('--eval_interval', type=int, default=10, help="interval of evaluation on val set")
@@ -27,10 +27,6 @@ parser.add_argument('--eval_interval', type=int, default=10, help="interval of e
 opt = parser.parse_args()
 print(opt)
 
-# opt.manualSeed = random.randint(1, 10000)  # fix seed
-# print("Random Seed: ", opt.manualSeed)
-# random.seed(opt.manualSeed)
-# torch.manual_seed(opt.manualSeed)
 
 # train_dataset = GeneratedDataset('/scratch/luxinz/train_curv_no_noise.h5')
 train_dataset = KittiNormalEst(stage='train')

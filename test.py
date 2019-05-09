@@ -19,7 +19,8 @@ import h5py
 parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=500, help='input batch size')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument('--model', type=str, default='kitti_output/model.pth', help='model path')
+parser.add_argument('--model', type=str, default='models/model_0.pth', help='model path')
+parser.add_argument('--input_transform', action='store_true', help="use input transform")
 parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 parser.add_argument('--thres', type=float, default=1.0, help='threshold for weight pruning')
 
@@ -36,7 +37,7 @@ def load_h5_kitti(h5_filename):
     label = f['gt_normals'][:]
     return data, label
 
-h5_test = 'test.h5'
+h5_test = 'data/test.h5'
 data_test, label_test = load_h5_kitti(h5_test)
 data_test_normal = (data_test - np.expand_dims(np.mean(data_test, axis=1), axis=1))/1.5
 
@@ -53,10 +54,9 @@ else:
 
 blue = lambda x: '\033[94m' + x + '\033[0m'
 
-classifier = PointNetDenseCls(k=3, feature_transform=opt.feature_transform)
+classifier = PointNetDenseCls(k=3, input_transform=opt.input_transform, feature_transform=opt.feature_transform)
 
 classifier.load_state_dict(torch.load(opt.model))
-#classifier.load_state_dict(torch.load('model30_3189.pth'))
 
 classifier.cuda()
 
