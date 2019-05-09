@@ -22,20 +22,20 @@ You can train your normla estimation model by running:
 ```
 python train.py 
 ```
-We've also provided a trained model in model.pth with rms angle error 31.78.
+We've also provided a trained model in model_0.pth with rms angle error 32.56.
 
 ## Weight prune and re-train
 Test the weight pruning results on one test sample. The following code will give you the number of pruned parameters and the rms angle error after weight pruning.
 The threshold controls the number of prameters being pruned.
 ```
-python test.py --thres 2.0 --model model.pth
+python test.py --thres 1.5 --model model.pth
 ```
 We have provided test.h5 which contains one full scene testing sample. you can also test other samples by modifying prep_test_data.py
 Re-train your model: 
 ```
-python train.py --model "PATH TO THE TRAINED MODEL" --thres 2.0 --prune
+python train.py --model "PATH TO THE TRAINED MODEL" --thres 1.5 --prune
 ```
-Genrally, training several epochs should be enough to give you acceptable reaults. The trained model will be saved in kitti_output folder. You can test and compare the results after retraining.
+Genrally, training several epochs should be enough to give you acceptable reaults. The trained model will be saved in kitti_output folder. You can test and compare the results after retraining. model_90.pth is the retrained model after pruning 90% parameters with rms angle error 34.18.
 
 ### Visualization
 By runnning the testing code, you will get two .npz files with normal prediction results of the original model and the pruned model.
@@ -43,4 +43,6 @@ Qulititative results can be demonstrated by running:
 ```
 python vis.py --file 'PATH TO .npz FILE'
 ```
-We've also provided res_15.npz which is the prediction results after pruning 90% parameters.
+We've also provided res_0.npz and res_90.npz which is the prediction results before and after pruning 90% parameters.
+
+ps: For the mentioned rms angle error, we refer to the error on the test.h5 full scene sample instead of the whole test set, beacause the ground truth (geometric method labeled) might not be correct.
