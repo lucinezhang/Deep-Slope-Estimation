@@ -47,7 +47,6 @@ ps: For the mentioned rms angle error, we refer to the error on the test.h5 full
 
 ## Reference
 [1] The codes are developed based on [this repo](https://github.com/fxia22/pointnet.pytorch).
-
 [2] R. Q. Charles, H. Su, M. Kaichun, and L. J.Guibas. Pointnet: Deep learning on point setsfor 3d classification and segmentation.2017IEEE Conference on Computer Vision andPattern Recognition (CVPR), Jul 2017.
 
 [3] C. R. Qi, L. Yi, H. Su, and L. J. Guibas. Point-net++: Deep hierarchical feature learning onpoint sets in a metric space, 2017.
