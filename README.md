@@ -43,4 +43,4 @@ Qulititative results can be demonstrated by running:
 ```
 python vis.py --file 'PATH TO .npz FILE'
 ```
-
+We've also provided res_15.npz which is the prediction results after pruning 90% parameters.
