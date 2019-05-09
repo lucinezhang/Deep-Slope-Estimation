@@ -149,7 +149,7 @@ class PointNetfeat(nn.Module):
             return torch.cat([points_feat, pc_feat_repeat], 1), trans, trans_feat
 
 class PointNetDenseCls(nn.Module):
-    def __init__(self, k = 3, global_feat=False, input_transform=False, feature_transform=False):
+    def __init__(self, k = 3, global_feat=False, input_transform=True, feature_transform=False):
         super(PointNetDenseCls, self).__init__()
         self.k = k
         self.global_feat = global_feat

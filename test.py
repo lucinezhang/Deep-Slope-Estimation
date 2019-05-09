@@ -72,8 +72,7 @@ with torch.no_grad():
     pred, trans, trans_feat = classifier(points)
     end = time.time()
 loss, rms_error = get_loss(pred, target, trans)
-if opt.feature_transform:
-    pred = torch.bmm(pred, trans.transpose(2,1))
+pred = torch.bmm(pred, trans.transpose(2,1))
 
 #print the original results
 print('time: {:.4f}, error: {:.4f}, pred shape: {}'.format(end-start, rms_error.item(), pred.shape))
@@ -87,7 +86,7 @@ params=classifier.state_dict()
 for k,v in params.items():
 #    print(k)
     if 'conv' in k or 'fc' in k:
-        mask = np.abs(v.cpu().detach().numpy()) >= np.std(v.cpu().detach().numpy())*opt.thres
+        mask = np.abs(v.cpu().detach().numpy()) >= np.std(v.cpu().detach().numpy())*float(opt.thres)
         all_mask.append(mask)
         params[k] *= torch.Tensor(mask.astype(np.float32)).cuda()
 classifier.load_state_dict(params)
@@ -101,8 +100,7 @@ with torch.no_grad():
     pred, trans, trans_feat = classifier(points)
     end = time.time()
 loss, rms_error = get_loss(pred, target, trans)
-if opt.feature_transform:
-    pred = torch.bmm(pred, trans.transpose(2,1))
+pred = torch.bmm(pred, trans.transpose(2,1))
 
 print('time: {:.4f}, error: {:.4f}, pred shape: {}'.format(end-start, rms_error.item(), pred.shape))
 

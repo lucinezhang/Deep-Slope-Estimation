@@ -80,7 +80,7 @@ if opt.prune:
     params=classifier.state_dict()
     for k,v in params.items():
         if 'conv' in k or 'fc' in k:
-            mask = np.abs(v.cpu().detach().numpy()) >= np.std(v.cpu().detach().numpy())*opt.thres
+            mask = np.abs(v.cpu().detach().numpy()) >= np.std(v.cpu().detach().numpy())*float(opt.thres)
             all_mask.append(mask)
             params[k] *= torch.Tensor(mask.astype(np.float32)).cuda()
     classifier.load_state_dict(params)
@@ -136,7 +136,7 @@ for epoch in range(opt.nepoch):
             writer.add_scalar('val/loss', loss.item(), step)
             writer.add_scalar('val/rms_error', rms_error.item(), step)
 
-            if rms_error.item() < best_error:
+            if rms_error.item() < best_error or i == 0:
                 best_error = rms_error.item()
                 torch.save(classifier.state_dict(), '%s/%s.pth' % (opt.outf, model_name))
                 print('model saved.')
