@@ -5,9 +5,19 @@ represent the slope or the condition of the road. Since formal verification tool
 
 The project homepage is [here](https://mscvprojects.ri.cmu.edu/2019teamf/).
 
-
 ## Data preparation
-We select the first four classes and some samples for training. code can be downloaded and processed by running:
+### Generated Data
+To generate some random planes and curved surfaces for training and testing, run
+```
+python generate_plane.py point_num point_cloud_num gaussian_noise_sigma
+```
+or
+```
+python generate_curv.py point_num point_cloud_num gaussian_noise_sigma
+```
+where `point_num` is the number of points in each point cloud, `point_cloud_num` is the total number of point clouds, and `gaussian_noise_sigma` is the $\sigma$ of the added gaussian noise. If $\sigma=0$, then there's no noise added.
+### Kitti Dataset
+We select the first four classes and some samples from Kitti Dataset for training. The data can be downloaded and processed by running:
 ```
 sh raw_data_downloader.sh
 python prep_kitti_data.py
@@ -47,6 +57,7 @@ ps: For the mentioned rms angle error, we refer to the error on the test.h5 full
 
 ## Reference
 [1] The codes are developed based on [this repo](https://github.com/fxia22/pointnet.pytorch).
+
 [2] R. Q. Charles, H. Su, M. Kaichun, and L. J.Guibas. Pointnet: Deep learning on point setsfor 3d classification and segmentation.2017IEEE Conference on Computer Vision andPattern Recognition (CVPR), Jul 2017.
 
 [3] C. R. Qi, L. Yi, H. Su, and L. J. Guibas. Point-net++: Deep hierarchical feature learning onpoint sets in a metric space, 2017.
