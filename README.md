@@ -1,7 +1,3 @@
-<script type="text/javascript" async
-src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js? 
-config=TeX-MML-AM_CHTML"
-</script>
 # Deep Slope Estimation with Formal Verification
 
 This project aims to estimate the drivability of the road for autonomous vehicles given a point cloud of the surroundings and verify the robustness of the model with formal verification techniques. We use the estimated point normals to 
