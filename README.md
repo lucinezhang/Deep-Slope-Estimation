@@ -35,7 +35,7 @@ Also, you can run
 ```
 python train.py --input_transform --feature_transform
 ```
-to add input transform network and feature transform network. In general, adding input transform network will help to improve the little.
+to add input transform network and feature transform network. In general, adding input transform network will help to improve a little.
 We've also provided a trained model in model_0.pth with a rms angle error of 32.56.
 
 ## Weight prune and re-train
