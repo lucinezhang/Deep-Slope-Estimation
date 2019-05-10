@@ -15,22 +15,28 @@ or
 ```
 python generate_curv.py point_num point_cloud_num gaussian_noise_sigma
 ```
-where `point_num` is the number of points in each point cloud, `point_cloud_num` is the total number of point clouds, and `gaussian_noise_sigma` is the $\sigma$ of the added gaussian noise. If $\sigma=0$, then there's no noise added.
+where `point_num` is the number of points in each point cloud, `point_cloud_num` is the total number of point clouds, and `gaussian_noise_sigma` is the sigma of the added gaussian noise. If sigma=0, then there's no noise added.
+This will give you h5py files which contain points and ground truth normals of size `point_cloud_num`*`point_num`*3.
 ### Kitti Dataset
 We select the first four classes and some samples from Kitti Dataset for training. The data can be downloaded and processed by running:
 ```
 sh raw_data_downloader.sh
 python prep_kitti_data.py
 ```
-This will give you four h5py files wich contain the training and testing data.
+This will give you four h5py files which contain the training and testing data.
 
 ## Train a model
 
-You can train your normla estimation model by running:
+You can train your normal estimation model by running:
 ```
 python train.py 
 ```
-We've also provided a trained model in model_0.pth with rms angle error 32.56.
+Also, you can run
+```
+python train.py --input_transform --feature_transform
+```
+to add input transform network and feature transform network. In general, adding input transform network will help to improve the little.
+We've also provided a trained model in model_0.pth with a rms angle error of 32.56.
 
 ## Weight prune and re-train
 Test the weight pruning results on one test sample. The following code will give you the number of pruned parameters and the rms angle error after weight pruning.
@@ -45,7 +51,7 @@ python train.py --model "PATH TO THE TRAINED MODEL" --thres 1.5 --prune
 ```
 Genrally, training several epochs should be enough to give you acceptable reaults. The trained model will be saved in kitti_output folder. You can test and compare the results after retraining. model_90.pth is the retrained model after pruning 90% parameters with rms angle error 34.18.
 
-## Visualization
+### Visualization
 By runnning the testing code, you will get two .npz files with normal prediction results of the original model and the pruned model.
 Qulititative results can be demonstrated by running:
 ```
@@ -54,6 +60,17 @@ python vis.py --file 'PATH TO .npz FILE'
 We've also provided res_0.npz and res_90.npz which is the prediction results before and after pruning 90% parameters.
 
 ps: For the mentioned rms angle error, we refer to the error on the test.h5 full scene sample instead of the whole test set, beacause the ground truth (geometric method labeled) might not be correct.
+
+## Knowledge Distillation
+To use knowledge distillation to do model compression, run
+```
+python train_distillation.py --teacher_model "PATH TO THE TRAINED MODEL"
+```
+The trained student network will be stored in the folder you specified in `--outf`.
+For comparison, you can also train the student network from scratch by running
+```
+python train_student.py
+```
 
 ## Reference
 [1] The codes are developed based on [this repo](https://github.com/fxia22/pointnet.pytorch).
