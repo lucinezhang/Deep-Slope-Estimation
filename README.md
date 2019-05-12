@@ -41,6 +41,7 @@ We've also provided a trained model in model_0.pth with a rms angle error of 32.
 ## Weight prune and re-train
 Test the weight pruning results on one test sample. The following code will give you the number of pruned parameters and the rms angle error after weight pruning.
 The threshold controls the number of prameters being pruned.
+add --input_transform or --feature_transform if you are using transform networks.
 ```
 python test.py --thres 1.5 --model model.pth --input_transform
 ```
