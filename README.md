@@ -42,12 +42,12 @@ We've also provided a trained model in model_0.pth with a rms angle error of 32.
 Test the weight pruning results on one test sample. The following code will give you the number of pruned parameters and the rms angle error after weight pruning.
 The threshold controls the number of prameters being pruned.
 ```
-python test.py --thres 1.5 --model model.pth
+python test.py --thres 1.5 --model model.pth --input_transform
 ```
 We have provided test.h5 which contains one full scene testing sample. you can also test other samples by modifying prep_test_data.py
 Re-train your model: 
 ```
-python train.py --model "PATH TO THE TRAINED MODEL" --thres 1.5 --prune
+python train.py --model "PATH TO THE TRAINED MODEL" --thres 1.5 --prune --input_transform
 ```
 Genrally, training several epochs should be enough to give you acceptable reaults. The trained model will be saved in kitti_output folder. You can test and compare the results after retraining. model_90.pth is the retrained model after pruning 90% parameters with rms angle error 34.18.
 
